@@ -1,11 +1,11 @@
-import emailjs from "emailjs-com";
+import fetch from "node-fetch"; // Import fetch for Node.js environment
 import { Client as WorkflowClient } from "@upstash/workflow";
 import config from "./config";
 
 // Initialize WorkflowClient
 export const workflowClient = new WorkflowClient({
-  baseUrl: config.env.upstash.qstashUrl, // Replace with your Upstash QStash URL
-  token: config.env.upstash.qstashToken, // Replace with your Upstash QStash token
+  baseUrl: config.env.upstash.qstashUrl,
+  token: config.env.upstash.qstashToken,
 });
 
 // Function to send an email using EmailJS
@@ -19,24 +19,41 @@ export const sendEmail = async ({
   message: string;
 }) => {
   try {
-    // Prepare the template parameters for EmailJS
     const templateParams = {
       to_email: email,
       subject: subject,
       message: message,
     };
 
-    // Retrieve EmailJS credentials from the config
-    const serviceID = config.env.emailJS.seriveId; // EmailJS service ID
-    const templateID = config.env.emailJS.templateId; // EmailJS template ID
-    const publicKey = config.env.emailJS.publicKey; // EmailJS public key
+    const serviceID = config.env.emailJS.seriveId;
+    const templateID = config.env.emailJS.templateId;
+    const publicKey = config.env.emailJS.publicKey;
 
-    // Send the email via EmailJS
-    await emailjs.send(serviceID, templateID, templateParams, publicKey);
-
-    console.log(
-      `Email sent successfully to ${email} with subject "${subject}"`
+    // Use node-fetch to send the request in Node.js
+    const response = await fetch(
+      "https://api.emailjs.com/api/v1.0/email/send",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          service_id: serviceID,
+          template_id: templateID,
+          user_id: publicKey,
+          template_params: templateParams,
+        }),
+      }
     );
+
+    const result = await response.json();
+    if (response.ok) {
+      console.log(
+        `Email sent successfully to ${email} with subject "${subject}"`
+      );
+    } else {
+      console.error(`Error sending email: ${result || result}`);
+    }
   } catch (error: any) {
     console.error(
       `Error sending email to ${email} with subject "${subject}":`,
@@ -55,7 +72,7 @@ export const triggerWorkflow = async ({
 }) => {
   try {
     await workflowClient.trigger({
-      url: `${config.env.prodApiEndpoint}/api/workflow/onboarding`, // API endpoint for workflow onboarding
+      url: `${config.env.prodApiEndpoint}/api/workflow/onboarding`,
       body: {
         email,
         fullName,
