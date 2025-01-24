@@ -1,4 +1,5 @@
-import fetch from "node-fetch"; // Import fetch for Node.js environment
+import emailjs from "emailjs-com";
+import fetch from "node-fetch";
 import { Client as WorkflowClient } from "@upstash/workflow";
 import config from "./config";
 
@@ -30,35 +31,30 @@ export const sendEmail = async ({
     const publicKey = config.env.emailJS.publicKey;
 
     // Use node-fetch to send the request in Node.js
-    const response = await fetch(
-      "https://api.emailjs.com/api/v1.0/email/send",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          service_id: serviceID,
-          template_id: templateID,
-          user_id: publicKey,
-          template_params: templateParams,
-        }),
-      }
-    );
+    const response = await fetch("https://api.emailjs.com/api/v1.0/email/send", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        service_id: serviceID,
+        template_id: templateID,
+        user_id: publicKey,
+        template_params: templateParams,
+      }),
+    });
 
-    const result = await response.json();
+    // Check if the response is ok
     if (response.ok) {
-      console.log(
-        `Email sent successfully to ${email} with subject "${subject}"`
-      );
+      const result = await response.json(); // Parse the response as JSON if it's valid
+      console.log(`Email sent successfully to ${email} with subject "${subject}"`);
     } else {
-      console.error(`Error sending email: ${result || result}`);
+      // Log non-JSON response content for debugging
+      const text = await response.text();
+      console.error(`Error sending email: ${text}`);
     }
   } catch (error: any) {
-    console.error(
-      `Error sending email to ${email} with subject "${subject}":`,
-      error?.message || error
-    );
+    console.error(`Error sending email to ${email} with subject "${subject}":`, error?.message || error);
   }
 };
 
@@ -80,9 +76,6 @@ export const triggerWorkflow = async ({
     });
     console.log(`Workflow triggered successfully for ${email}`);
   } catch (error: any) {
-    console.error(
-      `Error triggering workflow for ${email}:`,
-      error?.message || error
-    );
+    console.error(`Error triggering workflow for ${email}:`, error?.message || error);
   }
 };
