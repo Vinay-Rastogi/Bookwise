@@ -2,36 +2,37 @@ import emailjs from "emailjs-com";
 import { Client as WorkflowClient } from "@upstash/workflow";
 import config from "./config";
 
-// Initialize WorkflowClient
 export const workflowClient = new WorkflowClient({
-  baseUrl: config.env.upstash.qstashUrl, // Replace with your Upstash QStash URL
-  token: config.env.upstash.qstashToken, // Replace with your Upstash QStash token
+  baseUrl: config.env.upstash.qstashUrl,
+  token: config.env.upstash.qstashToken, 
 });
 
-// Function to send an email using EmailJS
+
 export const sendEmail = async ({
+
   email,
   subject,
   message,
+
 }: {
   email: string;
   subject: string;
   message: string;
+
 }) => {
   try {
-    // Prepare the template parameters for EmailJS
     const templateParams = {
       to_email: email,
       subject: subject,
       message: message,
     };
 
-    // Retrieve EmailJS credentials from the config
-    const serviceID = config.env.emailJS.seriveId; // EmailJS service ID
-    const templateID = config.env.emailJS.templateId; // EmailJS template ID
-    const publicKey = config.env.emailJS.publicKey; // EmailJS public key
+    const serviceID = config.env.emailJS.seriveId; 
+    const templateID = config.env.emailJS.templateId; 
+    const publicKey = config.env.emailJS.publicKey; 
 
-    // Send the email via EmailJS
+    emailjs.init(publicKey);
+
     await emailjs.send(serviceID, templateID, templateParams, publicKey);
 
     console.log(
@@ -45,7 +46,7 @@ export const sendEmail = async ({
   }
 };
 
-// Function to trigger a workflow
+
 export const triggerWorkflow = async ({
   email,
   fullName,
@@ -55,7 +56,7 @@ export const triggerWorkflow = async ({
 }) => {
   try {
     await workflowClient.trigger({
-      url: `${config.env.prodApiEndpoint}/api/workflow/onboarding`, // API endpoint for workflow onboarding
+      url: `${config.env.prodApiEndpoint}/api/workflow/onboarding`,
       body: {
         email,
         fullName,
